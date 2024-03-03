@@ -2,14 +2,14 @@
 msg_read_fail: .asciz "Read error\n"
 msg_args_fail: .asciz "Error: Input should contain two numbers\n"
 fmt_num: .asciz "%d\n"
-buffer: .space 20
+buffer: .space 22
 
 .text
 .global main
 
 main:
     la a0, buffer
-    li a1, 20
+    li a1, 22
     call gets
 
     beqz a0, read_fail

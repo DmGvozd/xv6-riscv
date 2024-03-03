@@ -1,7 +1,7 @@
 #include "kernel/types.h"
 #include "user/user.h"
 
-#define MAX_INPUT_SIZE 20
+#define MAX_INPUT_SIZE 22
 
 int main() {
     char buffer[MAX_INPUT_SIZE];

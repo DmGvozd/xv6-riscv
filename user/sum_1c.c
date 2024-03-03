@@ -2,7 +2,7 @@
 #include "user/user.h"
 #include "kernel/fcntl.h"
 
-#define BUFFER_SIZE 20
+#define BUFFER_SIZE 22
 
 int main() {
     char buffer[BUFFER_SIZE];
