@@ -8,12 +8,12 @@
 int main(int argc, char *argv[]) {
     int fd[2];
     if (pipe(fd) < 0) {
-        fprintf(2, "task2: pipe error\n");
+        fprintf(2, "task3: pipe error\n");
         exit(1);
     }
     int pid = fork();
     if (pid < 0) {
-        fprintf(2, "task2: fork error\n");
+        fprintf(2, "task3: fork error\n");
         exit(1);
     }
     if (pid == 0) {  // child
@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
         close(fd[0]);
         char *argv[] = {"/wc", 0};
         exec("/wc", argv);
-        fprintf(2, "task2: exec error\n");
+        fprintf(2, "task3: exec error\n");
         exit(1);
     } else {  // parent
         close(fd[0]);

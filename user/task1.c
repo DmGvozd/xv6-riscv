@@ -7,9 +7,15 @@
 
 int main(int argc, char *argv[]) {
     int pid, status, wpid;
+    int p[2];
 
     if (argc != 2) {
         fprintf(2, "Usage: %s a|b\n", argv[0]);
+        exit(1);
+    }
+
+    if (pipe(p) < 0) {
+        fprintf(2, "pipe creation failed\n");
         exit(1);
     }
 
