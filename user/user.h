@@ -22,6 +22,10 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int mopen(void);
+int mlock(int);
+int munlock(int);
+int mclose(int);
 
 // ulib.c
 int stat(const char*, struct stat*);
