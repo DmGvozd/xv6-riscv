@@ -33,6 +33,8 @@ exec(char *path, char **argv)
 
   begin_op();
 
+  pr_msg("pid = %d, path = %s", p->pid, path);
+  
   if((ip = namei(path)) == 0){
     end_op();
     return -1;
