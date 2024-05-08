@@ -14,24 +14,24 @@ int main(int argc, char *argv[])
 {
     if (argc != 3)
     {
-        fprintf(2, "test: неверный формат (<size> <x0>)\n");
+        fprintf(2, "test: неверный формат. Введите размер файла, а после - первый член последовательности (пример: test 100 4)\n");
         exit(0);
     }
 
     int size = atoi(argv[1]), initial_x = atoi(argv[2]);
     if (size <= 0)
     {
-        fprintf(2, "test: <size> должен быть больше 0\n");
+        fprintf(2, "test: размер файла должен быть больше 0\n");
         exit(0);
     }
     if (size % 4 != 0)
     {
-        fprintf(2, "test: <size> должен быть кратен 4\n");
+        fprintf(2, "test: размер файла должен быть кратен 4\n");
         exit(0);
     }
     if (initial_x < 0)
     {
-        fprintf(2, "test: <x0> не может быть меньше 0\n");
+        fprintf(2, "test: первый член последовательности не может быть меньше 0\n");
         exit(0);
     }
 
@@ -46,15 +46,12 @@ int main(int argc, char *argv[])
         {
             int current_bytes_written = write(file_descriptor, buffer, position * 4);
             wrote_bytes += current_bytes_written;
-            fprintf(2, "записано %d\n", wrote_bytes);
             if (current_bytes_written != position * 4)
                 break;
             position = 0;
         }
     }
     close(file_descriptor);
-
-    printf("всего: записано %d байт\n", wrote_bytes);
 
     file_descriptor = open(argv[1], O_RDONLY);
     x = initial_x;
@@ -65,7 +62,6 @@ int main(int argc, char *argv[])
         if (current_bytes_read == 0)
             break;
         read_bytes += current_bytes_read;
-        printf("прочитано %d байт\n", read_bytes);
         for (int j = 0; j < current_bytes_read / 4; ++j)
         {
             if (x != buffer[j])
@@ -75,8 +71,7 @@ int main(int argc, char *argv[])
     }
     close(file_descriptor);
 
-    printf("всего: прочитано %d байт\n", read_bytes);
-    printf("всего: успешно %d/%d байт\n", read_bytes - corrupted_bytes, read_bytes);
+    printf("успешно %d/%d байт\n", read_bytes - corrupted_bytes, read_bytes);
 
     exit(0);
 }
