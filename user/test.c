@@ -2,76 +2,108 @@
 #include "user/user.h"
 #include "kernel/fcntl.h"
 
-#define MULTIPLIER 31
-#define INCREMENT 74
-#define MODULUS 998244353
+#define A 1664525
+#define C 1013904223
+#define M 4294967296
 
-#define BUFFER_SIZE 1024 * 4
+#define BUF_SIZE 1024 * 4
 
-int buffer[BUFFER_SIZE];
+uint buf[BUF_SIZE];
+
+void generate_sequence(char *filename, uint size, uint seed)
+{
+    if (size <= 0 || size % 4 != 0)
+    {
+        fprintf(1, "Invalid file size\n");
+        exit(1);
+    }
+    if (seed < 0)
+    {
+        fprintf(1, "Invalid seed\n");
+        exit(1);
+    }
+
+    int fd = open(filename, O_CREATE | O_WRONLY);
+    if (fd < 0)
+    {
+        fprintf(1, "Error creating file\n");
+        exit(1);
+    }
+
+    uint state = seed;
+    uint bytes_written = 0;
+    int p = 0;
+    for (uint i = 0; i < size / 4; i++)
+    {
+        buf[p++] = state;
+        state = ((uint64) A * state + C) % M;
+
+        if (p == BUF_SIZE || i == size / 4 - 1)
+        {
+            int cur = write(fd, buf, p * 4);
+            bytes_written += cur;
+            if (cur != p * 4)
+            {
+                fprintf(1, "Error writing to file\n");
+                close(fd);
+                exit(1);
+            }
+            p = 0;
+        }
+    }
+
+    close(fd);
+    fprintf(1, "Successfully wrote %d bytes to file\n", bytes_written);
+}
 
 int main(int argc, char *argv[])
 {
     if (argc != 3)
     {
-        fprintf(2, "test: неверный формат. Введите размер файла, а после - первый член последовательности (пример: test 100 4)\n");
-        exit(0);
+        fprintf(1, "Usage: test_largefile <file_size> <seed>\n");
+        exit(1);
     }
 
-    int size = atoi(argv[1]), initial_x = atoi(argv[2]);
-    if (size <= 0)
+    uint size = atoi(argv[1]);
+    uint seed = atoi(argv[2]);
+
+    generate_sequence("testfile", size, seed);
+
+    uint state = seed;
+    int fd = open("testfile", O_RDONLY);
+    if (fd < 0)
     {
-        fprintf(2, "test: размер файла должен быть больше 0\n");
-        exit(0);
-    }
-    if (size % 4 != 0)
-    {
-        fprintf(2, "test: размер файла должен быть кратен 4\n");
-        exit(0);
-    }
-    if (initial_x < 0)
-    {
-        fprintf(2, "test: первый член последовательности не может быть меньше 0\n");
-        exit(0);
+        fprintf(1, "Error opening file\n");
+        exit(1);
     }
 
-    int file_descriptor = open(argv[1], O_RDWR | O_CREATE), wrote_bytes = 0, x = initial_x;
-    int position = 0;
-    for (int i = 0; i < size / 4; ++i)
-    {
-        buffer[position++] = x;
-        x = ((uint64)MULTIPLIER * x + INCREMENT) % MODULUS;
+    uint bytes_read = 0;
+    uint corrupted_bytes = 0;
 
-        if (position == BUFFER_SIZE || i == size / 4 - 1)
-        {
-            int current_bytes_written = write(file_descriptor, buffer, position * 4);
-            wrote_bytes += current_bytes_written;
-            if (current_bytes_written != position * 4)
-                break;
-            position = 0;
-        }
-    }
-    close(file_descriptor);
-
-    file_descriptor = open(argv[1], O_RDONLY);
-    x = initial_x;
-    int read_bytes = 0, corrupted_bytes = 0;
     while (1)
     {
-        int current_bytes_read = read(file_descriptor, buffer, BUFFER_SIZE * 4);
-        if (current_bytes_read == 0)
+        int cur = read(fd, buf, BUF_SIZE * 4);
+        if (cur == 0)
             break;
-        read_bytes += current_bytes_read;
-        for (int j = 0; j < current_bytes_read / 4; ++j)
+        bytes_read += cur;
+        for (int j = 0; j < cur / 4; ++j)
         {
-            if (x != buffer[j])
+            if (state != buf[j])
                 corrupted_bytes++;
-            x = ((uint64)MULTIPLIER * x + INCREMENT) % MODULUS;
+            state = ((uint64) A * state + C) % M;
         }
     }
-    close(file_descriptor);
 
-    printf("успешно %d/%d байт\n", read_bytes - corrupted_bytes, read_bytes);
+    close(fd);
 
+    fprintf(1, "Successfully read %d bytes from file\n", bytes_read);
+    if (corrupted_bytes == 0)
+    {
+        fprintf(1, "File verification successful\n");
+    }
+    else
+    {
+        fprintf(1, "File verification failed: %d corrupted bytes\n", corrupted_bytes);
+    }
     exit(0);
 }
