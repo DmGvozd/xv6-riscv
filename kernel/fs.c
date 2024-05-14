@@ -397,7 +397,6 @@ bmap(struct inode *ip, uint bn)
   bn -= NDIRECT;
 
   if(bn < NINDIRECT){
-    // Load indirect block, allocating if necessary.
     if((addr = ip->addrs[NDIRECT]) == 0){
       addr = balloc(ip->dev);
       if(addr == 0)
@@ -417,23 +416,46 @@ bmap(struct inode *ip, uint bn)
     return addr;
   }
 
-  if(bn < NDIRECT + NINDIRECT){
-    // Загрузить двойной непрямой блок, выделив его при необходимости.
-    if((addr = ip->addrs[NDIRECT]) == 0){
+  bn -= NINDIRECT;
+
+  if (bn < NINDIRECT * NINDIRECT) {
+    if ((addr = ip->addrs[NDIRECT+1]) == 0) {
       addr = balloc(ip->dev);
-      if(addr == 0)
+      if (addr == 0)
         return 0;
-      ip->addrs[NDIRECT] = addr;
+      ip->addrs[NDIRECT+1] = addr;
     }
+
     bp = bread(ip->dev, addr);
     a = (uint*)bp->data;
-    if((addr = a[bn - NDIRECT]) == 0){
+
+    uint outer = bn / NINDIRECT;
+    uint inner = bn % NINDIRECT;
+
+    uint addr2 = a[outer];
+    if (addr2 == 0) {
+      addr2 = balloc(ip->dev);
+      if (addr2 == 0) {
+        brelse(bp);
+        return 0;
+      }
+      a[outer] = addr2;
+      log_write(bp);
+    }
+
+    brelse(bp);
+
+    bp = bread(ip->dev, addr2);
+    a = (uint*)bp->data;
+
+    if ((addr = a[inner]) == 0) {
       addr = balloc(ip->dev);
-      if(addr){
-        a[bn - NDIRECT] = addr;
+      if (addr) {
+        a[inner] = addr;
         log_write(bp);
       }
     }
+
     brelse(bp);
     return addr;
   }
