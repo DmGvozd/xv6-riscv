@@ -67,10 +67,10 @@ int main(int argc, char *argv[])
     uint size = atoi(argv[1]);
     uint seed = atoi(argv[2]);
 
-    generate_sequence("testfile", size, seed);
+    generate_sequence(argv[1], size, seed);
 
     uint state = seed;
-    int fd = open("testfile", O_RDONLY);
+    int fd = open(argv[1], O_RDONLY);
     if (fd < 0)
     {
         fprintf(1, "Error opening file\n");
